@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>李志立编写俄罗斯方块</title>
+	</head>
+	<body>
+		<h2 style="text-align: center;">李志立编写俄罗斯方块</h2>
+		<p style="text-align: center;">用时<span id="time">0</span>秒，积分：<span id="fen">0</span>分</p>
+		<p style="text-align: center;color: red;">按空格开始，上变形，下加速，左右移动 <button style="background-color: cornflowerblue;border: 0;color: white;margin-left: 15px;padding: 3px 5px;cursor:pointer" onclick="chong()" type="button">重新开始</button></p>
+		<div id="main">
+			<table>
+			</table>
+		</div>
+		<style type="text/css">
+			#main{
+				margin: 0 auto;
+
+			}
+			td{
+				width: 25px;
+				height: 25px;
+				background-color: aliceblue;
+				
+			}
+		</style>
+		<audio id="bg" autoplay="" loop=""><source src="./img/bg.mp3"></audio>
+		<audio id="gua"><source src="./img/gua.mp3"></audio>
+		<audio id="cheng"><source src="./img/cheng.wav"></audio>
+	</body>
+	<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+	<script type="text/javascript">
+		//把所有变量放这里
+		let bgw=16;//背景 宽 
+		let bgh=25;//背景 高 
+		let zongarr=[]; //当前项目里面拥有的所有内容
+		let huo=[]; //当前可以活动的 方块
+		let kuaiarr=[]; //当前可以生成的方块 共七种 田， 一，丁，7，反7，左，右
+		let nowkuai=0; //当前的形状 共七种 田， 一，丁，7，反7，左，右
+		let fang=1;//当前方块方向
+		let begin = false; //是否开始
+		let ding; //定时器
+		let ding1; //计数，用于时间
+		let speed = 250; //速度
+		let score = 0; //积分
+		let wellarr=[];//墙的数组，不能碰
+		let downarr=[];//底部的数组，不能碰
+		let redarr=[];//成功的组，不能碰
+		
+		
+		
+		
+		
+		document.onkeydown=function(event){
+			var e = event || window.event || arguments.callee.caller.arguments[0];
+			if(e && e.keyCode==32){ // 空格
+				if(!begin){
+					begingame();
+					begin=true
+				}else{
+					//stopgame();
+					window.clearInterval(ding);
+					window.clearInterval(ding1);
+					alert('已经结束')
+					return false;
+				}
+			}
+			if(e && e.keyCode==37){ // 左
+				 move_l()
+			}
+			if(e && e.keyCode==38){ // 上
+				 up()
+			}
+			if(e && e.keyCode==39){ // 右
+				 move_r()
+			}
+			if(e && e.keyCode==40){ // 下
+				 down()
+			}
+		};
+		function up(){
+			//变形
+			console.log(nowkuai);
+			let newhuo;
+			if(nowkuai==1){
+				if(fang%2 == 1){
+					newhuo=[
+						huo[1],
+						huo[1]+bgw,
+						huo[1]+bgw*2,
+						huo[1]+bgw*3,
+					];
+				}else{
+					newhuo=[
+						huo[0]-1,
+						huo[0],
+						huo[0]+1,
+						huo[0]+2,
+					];
+				}
+			}
+			if(nowkuai==2){
+				if(fang%4 == 1){
+					newhuo=[
+						huo[1]-bgw,
+						huo[1]-1,
+						huo[1],
+						huo[1]+bgw,
+					];
+				}
+				if(fang%4 == 2){
+					newhuo=[
+						huo[0],
+						huo[1],
+						huo[2],
+						huo[2]+1,
+					];
+				}
+				if(fang%4 == 3){
+					newhuo=[
+						huo[2]-bgw,
+						huo[2],
+						huo[2]+1,
+						huo[2]+bgw,
+					];
+				}
+				if(fang%4 == 0){
+					newhuo=[
+						huo[1]-1,
+						huo[1],
+						huo[1]+1,
+						huo[1]+bgw,
+					];
+				}
+			}
+			if(nowkuai==3){
+				if(fang%4 == 1){
+					newhuo=[
+						huo[2]-bgw+1,
+						huo[2]-1,
+						huo[2],
+						huo[2]+1,
+					];
+				}
+				if(fang%4 == 2){
+					newhuo=[
+						huo[0]-1,
+						huo[2],
+						huo[2]+bgw,
+						huo[2]+bgw+1,
+					];
+				}
+				if(fang%4 == 3){
+					newhuo=[
+						huo[1]-1,
+						huo[1],
+						huo[1]+1,
+						huo[1]+bgw-1,
+					];
+				}
+				if(fang%4 == 0){
+					newhuo=[
+						huo[1]-bgw-1,
+						huo[1]-bgw,
+						huo[1],
+						huo[1]+bgw,
+					];
+				}
+			}
+			if(nowkuai==4){
+				if(fang%4 == 1){
+					newhuo=[
+						huo[2]-1,
+						huo[2],
+						huo[2]+1,
+						huo[2]+1+bgw,
+					];
+				}
+				if(fang%4 == 2){
+					newhuo=[
+						huo[1]-bgw,
+						huo[1],
+						huo[1]+bgw,
+						huo[1]+bgw-1,
+					];
+				}
+				if(fang%4 == 3){
+					newhuo=[
+						huo[1]-1-bgw,
+						huo[1]-1,
+						huo[1],
+						huo[1]+1,
+					];
+				}
+				if(fang%4 == 0){
+					newhuo=[
+						huo[2]-bgw,
+						huo[2]-bgw+1,
+						huo[2],
+						huo[2]+bgw,
+					];
+				}
+			}
+			if(nowkuai==5){
+				if(fang%2 == 1){
+					newhuo=[
+						huo[1]-1-bgw,
+						huo[1]-bgw,
+						huo[1],
+						huo[1]+1,
+					];
+				}
+				if(fang%2 == 0){
+					newhuo=[
+						huo[3]-bgw,
+						huo[3]-1,
+						huo[3],
+						huo[3]-1+bgw,
+					];
+				}
+			}
+			if(nowkuai==6){
+				if(fang%2 == 1){
+					newhuo=[
+						huo[1],
+						huo[1]+1,
+						huo[1]-1-bgw,
+						huo[1]-bgw,
+					];
+				}
+				if(fang%2 == 0){
+					newhuo=[
+						huo[0]-bgw,
+						huo[0],
+						huo[0]+1,
+						huo[0]+1+bgw,
+					];
+				}
+			}
+			fang++
+			let guo=true
+			for (let ii of newhuo) {
+				if(jQuery.inArray( ii, wellarr) >=0){
+					guo=false
+				}
+			}
+			if(guo){
+				map(newhuo)
+			}
+		}
+		function down(){
+			
+			let newhuo=[
+				huo[0]+bgw,
+				huo[1]+bgw,
+				huo[2]+bgw,
+				huo[3]+bgw,
+			];
+			//检查是不是 触底
+			//let news=	downarr.concat(redarr)
+			let news = MergeArray(redarr,downarr)
+			let chu=false
+			for (let ii of newhuo) {
+				if(jQuery.inArray( ii, news) >=0){
+					chu=true
+				}
+			}
+			if(chu){
+				redarr = MergeArray(redarr,huo)
+				//redarr=redarr.concat(huo)
+				for(let i in redarr){
+					$('td').eq(redarr[i]-1).css("background-color","red");
+				}
+				huo=[]
+				map()
+			}
+			//是否有练成一行
+			for(let i=1;i<bgh;i++){
+				let wo1=0;
+				for(let j=1;j<=(bgw-2);j++){
+					//console.log($('td').eq(i*bgw-j-1).css("background-color"));
+					if($('td').eq(i*bgw-j-1).css("background-color")=="rgb(255, 0, 0)"){
+						wo1++
+					}
+				}
+				
+				if(wo1==(bgw-2)){
+					$('#fen').text(Number($('#fen').text())+100)
+					let chengaudio = document.getElementById('cheng');
+					chengaudio.play();//播放
+					let wo2;
+					console.log(wellarr);
+					for(let j=1;j<=(bgw-2);j++){
+						$('td').eq(i*bgw-j-1).css("background-color","aliceblue");
+						console.log(i*bgw-j);
+						for (let s in redarr) {
+							if(i*bgw-j == redarr[s]){
+								if(i*bgw-j == redarr[s]){
+									let index=redarr.findIndex(v=>{
+									    return v===redarr[s];
+									 })
+									 redarr.splice(index,1);
+									//delete downarr[s];
+								}
+							}
+						}
+						
+						for (let s in wellarr) {
+							if(i*bgw-j == wellarr[s]){
+								let index=wellarr.findIndex(v=>{
+								    return v===wellarr[s];
+								 })
+								 wellarr.splice(index,1);
+								//delete downarr[s];
+							}
+						}
+	
+						for (let s in downarr) {
+							if(i*bgw-j == downarr[s]){
+								let index=downarr.findIndex(v=>{
+								    return v===downarr[s];
+								 })
+								 downarr.splice(index,1);
+								//delete downarr[s];
+							}
+						}
+					}
+					for (let s in redarr) {
+						if(i*bgw > redarr[s]){
+							let index=wellarr.findIndex(v=>{
+							    return v===redarr[s];
+							 })
+							 wellarr.splice(index,1);
+							$('td').eq(redarr[s]-1).css("background-color","aliceblue");
+							redarr[s]=redarr[s]+bgw
+						}
+					}
+					for (let s in redarr) {
+						$('td').eq(redarr[s]-1).css("background-color","red");
+					}
+					
+				}
+			}
+		//	console.log(redarr);
+			let guo=true
+			wellarr = MergeArray(wellarr,redarr)
+			for (let ii of newhuo) {
+				if(jQuery.inArray( ii, wellarr) >=0){
+					guo=false
+				}
+			}
+			//console.log(guo);
+			if(guo){
+				map(newhuo)
+			}
+		}
+		function MergeArray(arr1,arr2){ //合并去重
+		    var _arr = new Array();
+		    for(var i=0;i<arr1.length;i++){
+		       _arr.push(arr1[i]);
+		    }
+		    for(var i=0;i<arr2.length;i++){
+		        var flag = true;
+		        for(var j=0;j<arr1.length;j++){
+		            if(arr2[i]==arr1[j]){
+		                flag=false;
+		                break;
+		            }
+		        }
+		        if(flag){
+		            _arr.push(arr2[i]);
+		        }
+		    }
+		    return _arr;
+		}
+		function move_l(){
+			let newhuo=[
+				huo[0]-1,
+				huo[1]-1,
+				huo[2]-1,
+				huo[3]-1,
+			];
+			let guo=true
+			for (let ii of newhuo) {
+				if(jQuery.inArray( ii, wellarr) >=0){
+					guo=false
+				}
+			}
+			if(guo){
+				map(newhuo)
+			}
+		}
+		function move_r(){
+			let newhuo=[
+				huo[0]+1,
+				huo[1]+1,
+				huo[2]+1,
+				huo[3]+1,
+			];
+			let guo=true
+			for (let ii of newhuo) {
+				if(jQuery.inArray( ii, wellarr) >=0){
+					guo=false
+				}
+			}
+			if(guo){
+				map(newhuo)
+			}
+		}
+		
+		function begingame(){
+			if(!ding){
+				ding=setInterval(function(){
+					down()
+				},speed);
+				ding1=setInterval(function(){
+					$('#time').text(Number($('#time').text())+1)
+				},1000);
+			}
+			
+			map()
+		}
+		
+		function map(newhuo){ //生成块
+			if(huo.length==0){
+				nowkuai=parseInt(Math.random()*8,10);
+				//nowkuai=4
+				let kuai= kuaiarr[nowkuai];
+				if(!kuai){
+					nowkuai=parseInt(Math.random()*8,10);
+					//nowkuai=4
+					kuai=kuaiarr[nowkuai]
+				}
+				for(let i of kuai){
+					//push 活动里面
+					huo.push(i)
+					$('td').eq(i-1).css("background-color","red");
+				}
+			}else{
+				for(let i in huo){
+					$('td').eq(huo[i]-1).css("background-color","aliceblue");
+				}
+				huo=newhuo
+				for(let i in huo){
+					$('td').eq(huo[i]-1).css("background-color","red");
+				}
+			}
+			for(let ii of huo) {
+				if(jQuery.inArray( ii, redarr) >=0){
+					window.clearInterval(ding);
+					window.clearInterval(ding1);
+					let bgaudio = document.getElementById('bg');
+					bgaudio.pause();// 暂停
+					let guaaudio = document.getElementById('gua');
+					guaaudio.play();//播放
+					alert('你输了')
+					return false;
+				}
+			}
+			
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		init(bgw,bgh)
+		function init(bgw,bgh){
+			let html=''
+			for(let i=1;i<=bgh;i++){
+				html+='<tr>';
+				for(let j=1;j<=bgw;j++){
+					if(i==1 || i==bgh || j==1 || j==bgw){
+						//生成墙数组
+						wellarr.push((i-1)*bgw+j)
+						if(i==bgh){
+							downarr.push((i-1)*bgw+j)
+						}
+					//	html+="<td style='background-color: aquamarine ;'>"+((i-1)*bgw+j)+"</td>";
+						html+="<td style='background-color: aquamarine ;'></td>";
+					}else{
+						//html+="<td>"+((i-1)*bgw+j)+"</td>";
+						html+="<td></td>";
+					}
+				}
+				html+='</tr>';
+			}
+			$('table').html(html)
+			let ow = $("table").outerWidth(true);
+			$('#main').width(ow);
+			//生成 数组 田， 一，丁，7，反7，左，右
+			kuaiarr=[
+				[Math.floor(1.5*bgw),Math.floor(1.5*bgw)+1,Math.floor(2.5*bgw),Math.floor(2.5*bgw)+1],
+				[Math.floor(1.5*bgw)-1,Math.floor(1.5*bgw),Math.floor(1.5*bgw)+1,Math.floor(1.5*bgw)+2],
+				[Math.floor(1.5*bgw),Math.floor(1.5*bgw)+1,Math.floor(1.5*bgw)+2,Math.floor(2.5*bgw)+1],
+				[Math.floor(1.5*bgw),Math.floor(1.5*bgw)+1,Math.floor(2.5*bgw)+1,Math.floor(3.5*bgw)+1],
+				[Math.floor(1.5*bgw),Math.floor(1.5*bgw)+1,Math.floor(2.5*bgw),Math.floor(3.5*bgw)],
+				[Math.floor(1.5*bgw)+1,Math.floor(2.5*bgw),Math.floor(2.5*bgw)+1,Math.floor(3.5*bgw)],
+				[Math.floor(1.5*bgw),Math.floor(2.5*bgw),Math.floor(2.5*bgw)+1,Math.floor(3.5*bgw)+1],
+			];
+		}
+		
+		function chong(){
+			location.reload();
+		}
+	</script>
+</html>
